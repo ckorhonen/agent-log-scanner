@@ -150,30 +150,27 @@ actor ClaudeAnalyzer {
         let fileManager = FileManager.default
         let home = fileManager.homeDirectoryForCurrentUser.path
 
-        // Check common locations for claude CLI
+        // Check locations in priority order - ~/.local/bin first (user's preferred)
         let possiblePaths = [
-            "\(home)/.nvm/versions/node/v18.19.0/bin/claude",
-            "\(home)/.nvm/versions/node/v20.10.0/bin/claude",
-            "\(home)/.nvm/versions/node/v22.0.0/bin/claude",
+            "\(home)/.local/bin/claude",  // User's preferred location (from `which claude`)
             "/usr/local/bin/claude",
-            "/opt/homebrew/bin/claude",
-            "\(home)/.local/bin/claude"
+            "/opt/homebrew/bin/claude"
         ]
-
-        // Also check any nvm versions
-        let nvmVersionsPath = "\(home)/.nvm/versions/node"
-        if let nvmVersions = try? fileManager.contentsOfDirectory(atPath: nvmVersionsPath) {
-            for version in nvmVersions {
-                let claudePath = "\(nvmVersionsPath)/\(version)/bin/claude"
-                if fileManager.fileExists(atPath: claudePath) {
-                    return claudePath
-                }
-            }
-        }
 
         for path in possiblePaths {
             if fileManager.fileExists(atPath: path) {
                 return path
+            }
+        }
+
+        // Check nvm versions as fallback
+        let nvmVersionsPath = "\(home)/.nvm/versions/node"
+        if let nvmVersions = try? fileManager.contentsOfDirectory(atPath: nvmVersionsPath) {
+            for version in nvmVersions.sorted().reversed() { // Prefer newer versions
+                let claudePath = "\(nvmVersionsPath)/\(version)/bin/claude"
+                if fileManager.fileExists(atPath: claudePath) {
+                    return claudePath
+                }
             }
         }
 

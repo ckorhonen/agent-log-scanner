@@ -29,9 +29,13 @@ class SessionStore {
 
     @MainActor
     func loadSessions() async {
+        // Prevent multiple simultaneous loads
+        guard !isLoading else { return }
+
         isLoading = true
         error = nil
         sessions = []
+        allSessionFiles = []
         loadedCount = 0
 
         do {
@@ -54,6 +58,9 @@ class SessionStore {
 
         let filesToLoad = Array(allSessionFiles[startIndex..<endIndex])
 
+        // Collect new sessions first
+        var newSessions: [SessionSummary] = []
+
         await withTaskGroup(of: SessionSummary?.self) { group in
             for file in filesToLoad {
                 group.addTask {
@@ -63,8 +70,16 @@ class SessionStore {
 
             for await summary in group {
                 if let summary = summary {
-                    sessions.append(summary)
+                    newSessions.append(summary)
                 }
+            }
+        }
+
+        // Add only sessions that don't already exist (dedupe by file path)
+        let existingPaths = Set(sessions.map { $0.filePath.path })
+        for session in newSessions {
+            if !existingPaths.contains(session.filePath.path) {
+                sessions.append(session)
             }
         }
 
