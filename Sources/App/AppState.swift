@@ -4,6 +4,7 @@ import SwiftUI
 class AppState {
     let sessionStore = SessionStore()
     let claudeAnalyzer = ClaudeAnalyzer()
+    let codexAnalyzer = CodexAnalyzer()
     let claudeMDManager = ClaudeMDManager()
     let analysisStore = AnalysisStore()
 
@@ -16,6 +17,7 @@ class AppState {
     var analysisDate: Date?
     var isAnalyzing = false
     var analysisError: String?
+    var analysisProvider: AnalysisProvider = .codex // Default to Codex
 
     var projectFilter: String? = nil // nil means "All Projects"
 
@@ -63,11 +65,21 @@ class AppState {
             let globalCLAUDEMD = claudeMDManager.readGlobalCLAUDEMD()
             let projectCLAUDEMD = claudeMDManager.readProjectCLAUDEMD(projectPath: session.projectPath)
 
-            let suggestions = try await claudeAnalyzer.analyze(
-                session: session,
-                globalCLAUDEMD: globalCLAUDEMD,
-                projectCLAUDEMD: projectCLAUDEMD
-            )
+            let suggestions: [AnalysisSuggestion]
+            switch analysisProvider {
+            case .codex:
+                suggestions = try await codexAnalyzer.analyze(
+                    session: session,
+                    globalCLAUDEMD: globalCLAUDEMD,
+                    projectCLAUDEMD: projectCLAUDEMD
+                )
+            case .claude:
+                suggestions = try await claudeAnalyzer.analyze(
+                    session: session,
+                    globalCLAUDEMD: globalCLAUDEMD,
+                    projectCLAUDEMD: projectCLAUDEMD
+                )
+            }
 
             analysisSuggestions = suggestions
             analysisDate = Date()

@@ -31,20 +31,34 @@ struct SessionDetailView: View {
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button(action: {
-                    Task {
-                        await appState.analyzeCurrentSession()
+                // Provider selection menu with analyze action
+                Menu {
+                    ForEach(AnalysisProvider.allCases) { provider in
+                        Button(action: {
+                            appState.analysisProvider = provider
+                        }) {
+                            HStack {
+                                if appState.analysisProvider == provider {
+                                    Image(systemName: "checkmark")
+                                }
+                                Label(provider.displayName, systemImage: provider.icon)
+                            }
+                        }
                     }
-                }) {
+                } label: {
                     if appState.isAnalyzing {
                         ProgressView()
                             .scaleEffect(0.7)
                     } else {
-                        Label("Analyze", systemImage: "sparkles")
+                        Label("Analyze with \(appState.analysisProvider.displayName)", systemImage: appState.analysisProvider.icon)
+                    }
+                } primaryAction: {
+                    Task {
+                        await appState.analyzeCurrentSession()
                     }
                 }
                 .disabled(appState.isAnalyzing)
-                .help("Analyze session with Claude")
+                .help("Analyze session with \(appState.analysisProvider.displayName)")
             }
         }
         .navigationSubtitle("\(session.projectName) · \(session.stats.turnCount) turns")

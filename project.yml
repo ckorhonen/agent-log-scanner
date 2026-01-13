@@ -61,6 +61,22 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ckorhonen.agent-log-scanner.tests
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Agent Log Scanner.app/Contents/MacOS/Agent Log Scanner
+        BUNDLE_LOADER: $(TEST_HOST)
+        GENERATE_INFOPLIST_FILE: YES
+
+  AgentLogScannerUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - UITests
+    dependencies:
+      - target: AgentLogScanner
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ckorhonen.agent-log-scanner.uitests
+        TEST_TARGET_NAME: AgentLogScanner
+        GENERATE_INFOPLIST_FILE: YES
 
 schemes:
   AgentLogScanner:
@@ -68,6 +84,7 @@ schemes:
       targets:
         AgentLogScanner: all
         AgentLogScannerTests: [test]
+        AgentLogScannerUITests: [test]
     run:
       config: Debug
     test:
@@ -75,6 +92,7 @@ schemes:
       gatherCoverageData: true
       targets:
         - AgentLogScannerTests
+        - AgentLogScannerUITests
     profile:
       config: Release
     archive:
