@@ -8,7 +8,7 @@ struct SessionDetailView: View {
 
     var body: some View {
         HSplitView {
-            // Main conversation view
+            // Main conversation view (narrower - analysis is more important)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     ForEach(session.messages) { message in
@@ -17,9 +17,9 @@ struct SessionDetailView: View {
                 }
                 .padding()
             }
-            .frame(minWidth: 400)
+            .frame(minWidth: 300, maxWidth: 500)
 
-            // Right panel: Stats + Analysis
+            // Right panel: Stats + Analysis (wider - this is the focus)
             VStack(spacing: 0) {
                 StatsView(stats: session.stats)
 
@@ -27,7 +27,7 @@ struct SessionDetailView: View {
 
                 AnalysisView()
             }
-            .frame(width: 350)
+            .frame(minWidth: 450, idealWidth: 550)
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {

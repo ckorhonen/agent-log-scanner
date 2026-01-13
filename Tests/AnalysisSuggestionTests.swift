@@ -58,7 +58,8 @@ final class AnalysisSuggestionTests: XCTestCase {
             ("workflow", .workflow),
             ("tool-usage", .toolUsage),
             ("error-prevention", .errorPrevention),
-            ("knowledge", .knowledge)
+            ("knowledge", .knowledge),
+            ("skill", .skill)
         ]
 
         for (rawValue, expected) in categories {
@@ -107,6 +108,16 @@ final class AnalysisSuggestionTests: XCTestCase {
         XCTAssertEqual(AnalysisSuggestion.Category.toolUsage.displayName, "Tool Usage")
         XCTAssertEqual(AnalysisSuggestion.Category.errorPrevention.displayName, "Error Prevention")
         XCTAssertEqual(AnalysisSuggestion.Category.knowledge.displayName, "Knowledge")
+        XCTAssertEqual(AnalysisSuggestion.Category.skill.displayName, "Skill")
+    }
+
+    func testCategoryIcons() {
+        XCTAssertEqual(AnalysisSuggestion.Category.preference.icon, "person.fill")
+        XCTAssertEqual(AnalysisSuggestion.Category.workflow.icon, "arrow.triangle.branch")
+        XCTAssertEqual(AnalysisSuggestion.Category.toolUsage.icon, "wrench.fill")
+        XCTAssertEqual(AnalysisSuggestion.Category.errorPrevention.icon, "exclamationmark.shield.fill")
+        XCTAssertEqual(AnalysisSuggestion.Category.knowledge.icon, "book.fill")
+        XCTAssertEqual(AnalysisSuggestion.Category.skill.icon, "wand.and.stars")
     }
 
     func testTargetDisplayNames() {

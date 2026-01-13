@@ -14,6 +14,7 @@ struct AnalysisSuggestion: Identifiable, Codable {
         case toolUsage = "tool-usage"
         case errorPrevention = "error-prevention"
         case knowledge
+        case skill
 
         var displayName: String {
             switch self {
@@ -22,6 +23,7 @@ struct AnalysisSuggestion: Identifiable, Codable {
             case .toolUsage: return "Tool Usage"
             case .errorPrevention: return "Error Prevention"
             case .knowledge: return "Knowledge"
+            case .skill: return "Skill"
             }
         }
 
@@ -32,6 +34,18 @@ struct AnalysisSuggestion: Identifiable, Codable {
             case .toolUsage: return "orange"
             case .errorPrevention: return "red"
             case .knowledge: return "purple"
+            case .skill: return "cyan"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .preference: return "person.fill"
+            case .workflow: return "arrow.triangle.branch"
+            case .toolUsage: return "wrench.fill"
+            case .errorPrevention: return "exclamationmark.shield.fill"
+            case .knowledge: return "book.fill"
+            case .skill: return "wand.and.stars"
             }
         }
     }

@@ -191,13 +191,17 @@ struct CategoryBadge: View {
     let category: AnalysisSuggestion.Category
 
     var body: some View {
-        Text(category.displayName)
-            .font(.caption.bold())
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(categoryColor.opacity(0.2))
-            .foregroundStyle(categoryColor)
-            .clipShape(Capsule())
+        HStack(spacing: 4) {
+            Image(systemName: category.icon)
+                .font(.caption2)
+            Text(category.displayName)
+                .font(.caption.bold())
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(categoryColor.opacity(0.2))
+        .foregroundStyle(categoryColor)
+        .clipShape(Capsule())
     }
 
     private var categoryColor: Color {
@@ -207,6 +211,7 @@ struct CategoryBadge: View {
         case .toolUsage: return .orange
         case .errorPrevention: return .red
         case .knowledge: return .purple
+        case .skill: return .cyan
         }
     }
 }

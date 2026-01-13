@@ -39,19 +39,31 @@ actor CodexAnalyzer {
     - Project-specific context that should be in CLAUDE.md
     - Conventions or patterns unique to this codebase
 
+    ### 6. Skill/Agent Opportunities
+    - Repetitive tasks that could be automated with a Claude Code skill
+    - Complex multi-step workflows that would benefit from a dedicated agent
+    - Domain-specific operations that need specialized handling
+    - Tasks requiring external tool integration
+
     ## Output Format
 
     Return ONLY a JSON array of suggestions (no markdown, no explanation):
 
     [
       {
-        "category": "preference|workflow|tool-usage|error-prevention|knowledge",
+        "category": "preference|workflow|tool-usage|error-prevention|knowledge|skill",
         "target": "project|global",
-        "suggestion": "The exact text to add to CLAUDE.md",
+        "suggestion": "The exact text to add to CLAUDE.md OR skill/agent definition",
         "reasoning": "Brief explanation of why this helps",
         "evidence": "Quote or reference from the session"
       }
     ]
+
+    For skill suggestions, use category "skill" and include a complete skill definition in the suggestion field:
+    - Skill name and description
+    - When to trigger the skill
+    - What the skill should do
+    - Example prompts or commands
 
     ## Guidelines
 
@@ -61,6 +73,7 @@ actor CodexAnalyzer {
     - Don't duplicate rules already in the CLAUDE.md files
     - Prioritize suggestions that prevent repeated mistakes
     - For tool inefficiencies, write rules that prevent the specific mistake
+    - For skills, only suggest when there's a clear pattern of repeated complex tasks
     - Return an empty array [] if no meaningful suggestions can be made
     """
 
@@ -206,10 +219,12 @@ actor CodexAnalyzer {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: codexPath)
 
-        // Use GPT-5.2 with xhigh reasoning effort as specified in skill
+        // Use 'exec' subcommand for non-interactive use with GPT-5.2 and high reasoning effort
         process.arguments = [
+            "exec",
+            "--skip-git-repo-check",
             "-m", "gpt-5.2",
-            "-c", "model_reasoning_effort=\"xhigh\"",
+            "-c", "model_reasoning_effort=\"high\"",
             try String(contentsOf: promptFile, encoding: .utf8)
         ]
 
