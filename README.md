@@ -4,6 +4,8 @@ A macOS app for introspecting Claude Code sessions. Browse, search, and analyze 
 
 Built this as part of my explorations into AI-assisted development workflows. Would love feedback if anyone finds it useful—have at it! If you're interested in my writings on AI and software development, follow me at [CDD.dev](https://cdd.dev).
 
+![Agent Log Scanner Screenshot](screenshot.png)
+
 ## Features
 
 - **Session Browser**: Navigate all your Claude Code sessions from `~/.claude/projects/`
