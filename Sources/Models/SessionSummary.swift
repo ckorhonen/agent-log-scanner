@@ -2,7 +2,8 @@ import Foundation
 
 /// Lightweight session metadata for sidebar list
 struct SessionSummary: Identifiable, Hashable {
-    let id: UUID
+    // Use file path as stable ID to prevent duplicates
+    var id: String { filePath.path }
     let projectPath: String
     let projectName: String
     let timestamp: Date

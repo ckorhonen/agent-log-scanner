@@ -146,6 +146,41 @@ actor ClaudeAnalyzer {
         return lines.joined(separator: "\n")
     }
 
+    private func findClaudeCLI() -> String {
+        let fileManager = FileManager.default
+        let home = fileManager.homeDirectoryForCurrentUser.path
+
+        // Check common locations for claude CLI
+        let possiblePaths = [
+            "\(home)/.nvm/versions/node/v18.19.0/bin/claude",
+            "\(home)/.nvm/versions/node/v20.10.0/bin/claude",
+            "\(home)/.nvm/versions/node/v22.0.0/bin/claude",
+            "/usr/local/bin/claude",
+            "/opt/homebrew/bin/claude",
+            "\(home)/.local/bin/claude"
+        ]
+
+        // Also check any nvm versions
+        let nvmVersionsPath = "\(home)/.nvm/versions/node"
+        if let nvmVersions = try? fileManager.contentsOfDirectory(atPath: nvmVersionsPath) {
+            for version in nvmVersions {
+                let claudePath = "\(nvmVersionsPath)/\(version)/bin/claude"
+                if fileManager.fileExists(atPath: claudePath) {
+                    return claudePath
+                }
+            }
+        }
+
+        for path in possiblePaths {
+            if fileManager.fileExists(atPath: path) {
+                return path
+            }
+        }
+
+        // Fallback to hoping it's in PATH
+        return "/usr/bin/env claude"
+    }
+
     private func invokeClaudeCLI(systemPrompt: String, userPrompt: String) async throws -> String {
         // Create a temporary file for the prompt (to handle large prompts)
         let tempDir = FileManager.default.temporaryDirectory
@@ -162,14 +197,26 @@ actor ClaudeAnalyzer {
         try fullPrompt.write(to: promptFile, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: promptFile) }
 
+        // Find claude CLI
+        let claudePath = findClaudeCLI()
+
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = [
-            "claude",
-            "-p", try String(contentsOf: promptFile, encoding: .utf8),
-            "--model", "claude-opus-4-5-20251101",
-            "--output-format", "text"
-        ]
+        if claudePath.contains("/usr/bin/env") {
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            process.arguments = [
+                "claude",
+                "-p", try String(contentsOf: promptFile, encoding: .utf8),
+                "--model", "claude-opus-4-5-20251101",
+                "--output-format", "text"
+            ]
+        } else {
+            process.executableURL = URL(fileURLWithPath: claudePath)
+            process.arguments = [
+                "-p", try String(contentsOf: promptFile, encoding: .utf8),
+                "--model", "claude-opus-4-5-20251101",
+                "--output-format", "text"
+            ]
+        }
 
         let outputPipe = Pipe()
         let errorPipe = Pipe()

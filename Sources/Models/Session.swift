@@ -2,13 +2,13 @@ import Foundation
 
 /// Full session data for detail view
 struct Session: Identifiable {
-    let id: UUID
+    let id: String
     let projectPath: String
     let projectName: String
     let messages: [Message]
     let stats: SessionStats
 
-    init(id: UUID, projectPath: String, messages: [Message]) {
+    init(id: String, projectPath: String, messages: [Message]) {
         self.id = id
         self.projectPath = projectPath
         self.projectName = Session.extractProjectName(from: projectPath)

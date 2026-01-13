@@ -134,10 +134,8 @@ class SessionStore {
 
             let lines = content.components(separatedBy: .newlines)
 
-            var sessionId: UUID?
             var timestamp: Date?
-            var projectPath: String?
-            var turnCount = 0
+            let projectPath = fileURL.deletingLastPathComponent().lastPathComponent
 
             for line in lines {
                 guard !line.isEmpty,
@@ -146,40 +144,20 @@ class SessionStore {
                     continue
                 }
 
-                // Extract session ID
-                if sessionId == nil, let idString = json["sessionId"] as? String {
-                    sessionId = UUID(uuidString: idString)
-                }
-
-                // Extract project path from parent directory
-                if projectPath == nil {
-                    projectPath = fileURL.deletingLastPathComponent().lastPathComponent
-                }
-
                 // Extract timestamp from first message
                 if timestamp == nil, let timestampString = json["timestamp"] as? String {
                     timestamp = ISO8601DateFormatter().date(from: timestampString)
-                }
-
-                // Count user messages (turns)
-                if let type = json["type"] as? String, type == "user" {
-                    turnCount += 1
+                    break // Only need first timestamp
                 }
             }
 
             // If we couldn't read from content, use file attributes
-            if sessionId == nil {
-                sessionId = UUID(uuidString: fileURL.deletingPathExtension().lastPathComponent) ?? UUID()
-            }
-
             if timestamp == nil {
                 let attrs = try FileManager.default.attributesOfItem(atPath: fileURL.path)
                 timestamp = attrs[.modificationDate] as? Date ?? Date()
             }
 
-            guard let finalId = sessionId,
-                  let finalTimestamp = timestamp,
-                  let finalPath = projectPath else {
+            guard let finalTimestamp = timestamp else {
                 return nil
             }
 
@@ -194,9 +172,8 @@ class SessionStore {
             }
 
             return SessionSummary(
-                id: finalId,
-                projectPath: finalPath,
-                projectName: Session.extractProjectName(from: finalPath),
+                projectPath: projectPath,
+                projectName: Session.extractProjectName(from: projectPath),
                 timestamp: finalTimestamp,
                 turnCount: fullTurnCount,
                 filePath: fileURL

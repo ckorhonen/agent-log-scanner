@@ -65,6 +65,26 @@ struct AnalysisView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 12) {
+                        // Show when analysis was done
+                        if let date = appState.analysisDate {
+                            HStack {
+                                Image(systemName: "clock")
+                                    .foregroundStyle(.secondary)
+                                Text("Analyzed \(date.formatted(.relative(presentation: .named)))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Button("Re-analyze") {
+                                    Task {
+                                        await appState.analyzeCurrentSession()
+                                    }
+                                }
+                                .font(.caption)
+                                .buttonStyle(.link)
+                            }
+                            .padding(.horizontal)
+                        }
+
                         ForEach(appState.analysisSuggestions) { suggestion in
                             SuggestionCardView(suggestion: suggestion)
                         }

@@ -5,21 +5,26 @@ class AppState {
     let sessionStore = SessionStore()
     let claudeAnalyzer = ClaudeAnalyzer()
     let claudeMDManager = ClaudeMDManager()
+    let analysisStore = AnalysisStore()
 
-    var selectedSessionID: UUID?
+    var selectedSessionID: String?
     var selectedSession: Session?
+    var selectedSessionFilePath: URL?
     var isLoadingSession = false
 
     var analysisSuggestions: [AnalysisSuggestion] = []
+    var analysisDate: Date?
     var isAnalyzing = false
     var analysisError: String?
 
     var projectFilter: String? = nil // nil means "All Projects"
 
-    func selectSession(_ id: UUID?) async {
+    func selectSession(_ id: String?) async {
         selectedSessionID = id
         selectedSession = nil
+        selectedSessionFilePath = nil
         analysisSuggestions = []
+        analysisDate = nil
         analysisError = nil
 
         guard let id = id else { return }
@@ -30,6 +35,13 @@ class AppState {
         if let summary = sessionStore.sessions.first(where: { $0.id == id }) {
             do {
                 selectedSession = try await sessionStore.loadFullSession(summary)
+                selectedSessionFilePath = summary.filePath
+
+                // Load existing analysis if available
+                if let wrapper = await analysisStore.load(for: summary.filePath) {
+                    analysisSuggestions = wrapper.suggestions
+                    analysisDate = wrapper.analyzedAt
+                }
             } catch {
                 print("Error loading session: \(error)")
             }
@@ -37,11 +49,13 @@ class AppState {
     }
 
     func analyzeCurrentSession() async {
-        guard let session = selectedSession else { return }
+        guard let session = selectedSession,
+              let filePath = selectedSessionFilePath else { return }
 
         isAnalyzing = true
         analysisError = nil
         analysisSuggestions = []
+        analysisDate = nil
 
         defer { isAnalyzing = false }
 
@@ -49,11 +63,17 @@ class AppState {
             let globalCLAUDEMD = claudeMDManager.readGlobalCLAUDEMD()
             let projectCLAUDEMD = claudeMDManager.readProjectCLAUDEMD(projectPath: session.projectPath)
 
-            analysisSuggestions = try await claudeAnalyzer.analyze(
+            let suggestions = try await claudeAnalyzer.analyze(
                 session: session,
                 globalCLAUDEMD: globalCLAUDEMD,
                 projectCLAUDEMD: projectCLAUDEMD
             )
+
+            analysisSuggestions = suggestions
+            analysisDate = Date()
+
+            // Persist the analysis
+            try await analysisStore.save(suggestions: suggestions, for: filePath)
         } catch {
             analysisError = error.localizedDescription
         }
