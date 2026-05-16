@@ -2,7 +2,7 @@
 
 ## Project Facts
 
-Agent Log Scanner is a macOS SwiftUI app for browsing Claude Code session logs, viewing transcripts, and running Claude or Codex analysis over sessions. The Xcode project is generated from `project.yml` with XcodeGen.
+Agent Log Scanner is a macOS SwiftUI app for browsing Claude Code session logs, viewing transcripts, and running Cloudflare Gateway/OpenAI or Claude analysis over sessions. The Xcode project is generated from `project.yml` with XcodeGen.
 
 ## Commands
 
@@ -15,7 +15,7 @@ Agent Log Scanner is a macOS SwiftUI app for browsing Claude Code session logs, 
 
 - `Sources/App/`: app entry point and global state.
 - `Sources/Models/`: session, message, analysis, and provider models.
-- `Sources/Services/`: session parsing, Claude/Codex analyzers, and persistence.
+- `Sources/Services/`: session parsing, Cloudflare Gateway/OpenAI and Claude analyzers, and persistence.
 - `Sources/Views/`: SwiftUI views.
 - `Tests/` and `UITests/`: generated-project test targets.
 

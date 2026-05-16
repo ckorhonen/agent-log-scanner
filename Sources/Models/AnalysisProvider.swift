@@ -8,7 +8,7 @@ enum AnalysisProvider: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .codex: return "Codex (GPT-5.2)"
+        case .codex: return "Gateway (OpenAI)"
         case .claude: return "Claude"
         }
     }

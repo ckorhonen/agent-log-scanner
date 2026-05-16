@@ -11,7 +11,7 @@ Built this as part of my explorations into AI-assisted development workflows. Wo
 - **Session Browser**: Navigate all your Claude Code sessions from `~/.claude/projects/`
 - **Conversation Viewer**: Read full conversation transcripts with tool calls and results
 - **Statistics Dashboard**: View message counts, tool usage breakdown, session duration, and errors
-- **AI-Powered Analysis**: Analyze sessions using Codex (GPT-5.2) or Claude to get actionable suggestions
+- **AI-Powered Analysis**: Analyze sessions using Cloudflare AI Gateway/OpenAI or Claude to get actionable suggestions
 - **CLAUDE.md Integration**: Apply suggestions directly to your project or global CLAUDE.md files
 - **Analysis Persistence**: Saved analyses reload automatically when revisiting sessions
 
@@ -24,8 +24,16 @@ Built this as part of my explorations into AI-assisted development workflows. Wo
 ### For Analysis Features
 
 One or both of:
-- **Codex CLI** (default): `npm install -g @openai/codex`
+- **Cloudflare AI Gateway token** (default OpenAI-backed analysis): `CLOUDFLARE_AI_GATEWAY_TOKEN`, or the `cloudflare-ai-gateway-sourcebottle-token` macOS Keychain item
 - **Claude CLI**: Install from [Claude Code](https://claude.ai/code)
+
+The Gateway path sends the standard `cf-aig-metadata` header. Set global defaults with `CF_AIG_METADATA` or per-key overrides:
+
+```bash
+export CF_AIG_METADATA='{"app":"agent-log-scanner","env":"local","surface":"desktop","feature":"session-analysis","caller":"ckorhonen"}'
+```
+
+`CF_AIG_AGENT_LOG_SCANNER_MODEL` or `CF_AIG_AGENT_LOG_SCANNER_CODEX_MODEL` can override the default Gateway model (`openai/gpt-5-mini`).
 
 ## Installation
 
@@ -53,7 +61,7 @@ open AgentLogScanner.xcodeproj
 3. Filter by project using the dropdown
 4. Click a session to view the full conversation
 5. Click the "Analyze" button to get AI-powered suggestions
-6. Use the dropdown to switch between Codex and Claude for analysis
+6. Use the dropdown to switch between Gateway/OpenAI and Claude for analysis
 7. Apply suggestions to your CLAUDE.md files with one click
 
 ## Architecture
@@ -67,11 +75,12 @@ Sources/
 │   ├── Session.swift               # Session data models
 │   ├── Message.swift               # Message and content blocks
 │   ├── AnalysisSuggestion.swift    # Analysis result models
-│   └── AnalysisProvider.swift      # Provider enum (Codex/Claude)
+│   └── AnalysisProvider.swift      # Provider enum (Gateway/Claude)
 ├── Services/
 │   ├── SessionStore.swift          # Session discovery and parsing
+│   ├── CloudflareGatewayClient.swift # Cloudflare AI Gateway integration
 │   ├── ClaudeAnalyzer.swift        # Claude CLI integration
-│   ├── CodexAnalyzer.swift         # Codex CLI integration
+│   ├── CodexAnalyzer.swift         # Gateway-backed OpenAI analysis
 │   ├── CLAUDEMDManager.swift       # CLAUDE.md file operations
 │   └── AnalysisStore.swift         # Analysis persistence
 └── Views/
@@ -105,13 +114,13 @@ xcodegen generate
 
 ## Analysis Providers
 
-### Codex (Default)
+### Gateway/OpenAI (Default)
 
-Uses OpenAI's GPT-5.2 with maximum reasoning effort (`xhigh`) for thorough analysis. Requires the Codex CLI and an OpenAI API key or ChatGPT subscription.
+Uses the `sourcebottle` Cloudflare AI Gateway with the OpenAI-compatible route. The default model is `openai/gpt-5-mini`, and all requests include Gateway metadata for cost attribution. The Gateway token is read from `CLOUDFLARE_AI_GATEWAY_TOKEN` first, then from the `cloudflare-ai-gateway-sourcebottle-token` macOS Keychain item.
 
 ### Claude
 
-Uses Claude's analysis capabilities via the Claude CLI. Requires Claude Code to be installed and authenticated.
+Uses Claude's analysis capabilities via the Claude CLI. This remains a separate path until the Anthropic Gateway provider key is healthy enough to use as the default app route.
 
 Both providers use the same analysis prompt to identify:
 - User preferences

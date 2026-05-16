@@ -1,6 +1,8 @@
 import Foundation
 
 actor CodexAnalyzer {
+    private let gateway = CloudflareGatewayClient()
+
     private let systemPrompt = """
     You are an expert at analyzing Claude Code sessions to extract learnings that improve future agent performance. You will receive:
 
@@ -103,7 +105,7 @@ actor CodexAnalyzer {
         Analyze this session and provide suggestions to improve future Claude Code performance.
         """
 
-        let response = try await invokeCodexCLI(systemPrompt: systemPrompt, userPrompt: userPrompt)
+        let response = try await invokeGateway(systemPrompt: systemPrompt, userPrompt: userPrompt)
         return try parseSuggestions(from: response)
     }
 
@@ -159,96 +161,21 @@ actor CodexAnalyzer {
         return lines.joined(separator: "\n")
     }
 
-    private func findCodexCLI() -> String? {
-        let fileManager = FileManager.default
-        let home = fileManager.homeDirectoryForCurrentUser.path
+    private func invokeGateway(systemPrompt: String, userPrompt: String) async throws -> String {
+        let model = CloudflareGatewayClient.configuredModel(
+            specificEnvName: "CF_AIG_AGENT_LOG_SCANNER_CODEX_MODEL",
+            defaultModel: "openai/gpt-5-mini"
+        )
+        let metadata = try CloudflareGatewayMetadata.fromEnvironment(feature: "session-analysis")
 
-        // Check common locations for codex
-        let possiblePaths = [
-            "\(home)/.local/bin/codex",
-            "/usr/local/bin/codex",
-            "/opt/homebrew/bin/codex"
-        ]
-
-        for path in possiblePaths {
-            if fileManager.fileExists(atPath: path) {
-                return path
-            }
-        }
-
-        // Check if installed via npm globally
-        let npmGlobalPath = "\(home)/.npm-global/bin/codex"
-        if fileManager.fileExists(atPath: npmGlobalPath) {
-            return npmGlobalPath
-        }
-
-        // Check nvm versions
-        let nvmVersionsPath = "\(home)/.nvm/versions/node"
-        if let nvmVersions = try? fileManager.contentsOfDirectory(atPath: nvmVersionsPath) {
-            for version in nvmVersions.sorted().reversed() {
-                let codexPath = "\(nvmVersionsPath)/\(version)/bin/codex"
-                if fileManager.fileExists(atPath: codexPath) {
-                    return codexPath
-                }
-            }
-        }
-
-        return nil
-    }
-
-    private func invokeCodexCLI(systemPrompt: String, userPrompt: String) async throws -> String {
-        guard let codexPath = findCodexCLI() else {
-            throw AnalysisError.cliError("Codex CLI not found. Install with: npm install -g @openai/codex")
-        }
-
-        // Create a temporary file for the prompt (to handle large prompts)
-        let tempDir = FileManager.default.temporaryDirectory
-        let promptFile = tempDir.appendingPathComponent("codex-prompt-\(UUID().uuidString).txt")
-
-        let fullPrompt = """
-        <system>
-        \(systemPrompt)
-        </system>
-
-        \(userPrompt)
-        """
-
-        try fullPrompt.write(to: promptFile, atomically: true, encoding: .utf8)
-        defer { try? FileManager.default.removeItem(at: promptFile) }
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: codexPath)
-
-        // Use 'exec' subcommand for non-interactive use with GPT-5.2 and high reasoning effort
-        process.arguments = [
-            "exec",
-            "--skip-git-repo-check",
-            "-m", "gpt-5.2",
-            "-c", "model_reasoning_effort=\"high\"",
-            try String(contentsOf: promptFile, encoding: .utf8)
-        ]
-
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        process.standardOutput = outputPipe
-        process.standardError = errorPipe
-
-        try process.run()
-        process.waitUntilExit()
-
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-
-        if process.terminationStatus != 0 {
-            let errorString = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-            throw AnalysisError.cliError(errorString)
-        }
-
-        guard let output = String(data: outputData, encoding: .utf8) else {
-            throw AnalysisError.invalidResponse
-        }
-
-        return output
+        return try await gateway.chatCompletion(
+            model: model,
+            messages: [
+                CloudflareGatewayMessage(role: "system", content: systemPrompt),
+                CloudflareGatewayMessage(role: "user", content: userPrompt)
+            ],
+            metadata: metadata
+        )
     }
 
     private func parseSuggestions(from response: String) throws -> [AnalysisSuggestion] {

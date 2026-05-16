@@ -9,7 +9,7 @@ final class AnalysisProviderTests: XCTestCase {
     }
 
     func testProviderDisplayNames() {
-        XCTAssertEqual(AnalysisProvider.codex.displayName, "Codex (GPT-5.2)")
+        XCTAssertEqual(AnalysisProvider.codex.displayName, "Gateway (OpenAI)")
         XCTAssertEqual(AnalysisProvider.claude.displayName, "Claude")
     }
 

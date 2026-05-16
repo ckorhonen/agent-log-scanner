@@ -141,7 +141,7 @@ final class AgentLogScannerUITests: XCTestCase {
         analyzeMenu.click()
 
         // Check for provider options in the menu
-        let codexOption = app.menuItems["Codex (GPT-5.2)"]
+        let codexOption = app.menuItems["Gateway (OpenAI)"]
         let claudeOption = app.menuItems["Claude"]
 
         // At least one should exist

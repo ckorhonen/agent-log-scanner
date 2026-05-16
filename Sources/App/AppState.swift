@@ -17,7 +17,7 @@ class AppState {
     var analysisDate: Date?
     var isAnalyzing = false
     var analysisError: String?
-    var analysisProvider: AnalysisProvider = .codex // Default to Codex
+    var analysisProvider: AnalysisProvider = .codex // Default to Gateway/OpenAI
 
     var projectFilter: String? = nil // nil means "All Projects"
 
